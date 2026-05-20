@@ -11,6 +11,8 @@ import yfinance as yf
 from analyst_model import train_analyst_model
 
 DISCLAIMER_TEXT = "Educational tool only. Not guaranteed financial advice."
+SENTIMENT_POSITIVE_THRESHOLD = 0.2
+SENTIMENT_NEGATIVE_THRESHOLD = -0.2
 
 INVESTMENT_STYLES: Dict[str, Dict[str, str]] = {
     "Long-term & Safe": {
@@ -110,7 +112,11 @@ def _plain_english_reasoning(
     roic = latest_row.get("ROIC", np.nan)
     market_cap = latest_row.get("Market_Cap", np.nan)
 
-    sentiment_label = "positive" if sentiment > 0.2 else "negative" if sentiment < -0.2 else "mixed"
+    sentiment_label = (
+        "positive"
+        if sentiment > SENTIMENT_POSITIVE_THRESHOLD
+        else "negative" if sentiment < SENTIMENT_NEGATIVE_THRESHOLD else "mixed"
+    )
 
     fundamentals_line = (
         f"PE ratio is {pe:.2f}, ROIC is {roic:.2%}, and market cap is ${market_cap:,.0f}."
@@ -223,7 +229,7 @@ def main() -> None:
                     "cv_f1_macro_std": round(float(cv_metrics["cv_f1_macro_std"]), 4),
                 }
             )
-        except Exception as exc:  # noqa: BLE001
+        except (ValueError, RuntimeError, KeyError) as exc:
             st.error(f"Unable to generate compass reading: {exc}")
 
     render_disclaimer_banner()

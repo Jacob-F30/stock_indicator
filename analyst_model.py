@@ -283,7 +283,7 @@ class TripleBarrierXGBoostAnalyst:
             y_train_enc = y_train.map(class_to_idx).astype(int)
 
             eval_mask = y_test.isin(fold_classes)
-            if not bool(eval_mask.any()):
+            if not eval_mask.any():
                 continue
             y_test_eval = y_test[eval_mask]
             X_test_eval = X_test.loc[eval_mask]
@@ -373,7 +373,7 @@ class TripleBarrierXGBoostAnalyst:
         prob_map = {-1: 0.0, 0: 0.0, 1: 0.0}
         for idx, class_label in enumerate(self.artifacts.classes_):
             prob_map[class_label] = float(probabilities[idx])
-        best_class = max(prob_map, key=prob_map.get)
+        best_class = max(prob_map, key=lambda cls: prob_map[cls])
 
         return {
             "probabilities": {
