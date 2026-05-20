@@ -49,9 +49,10 @@ stock_indicator/
 ├── analyst_model.py         # Analyst quantitative model and training pipeline
 ├── requirements.txt         # Python dependencies
 ├── README.md                # Project documentation
-└── agents/
-    └── reader/              # Future standalone Reader sentiment modules
+└── .gitignore               # Common local artifacts excluded from version control
 ```
+
+Planned extension point: future standalone Reader modules can be added under `agents/reader/`.
 
 ## Data & Scope
 

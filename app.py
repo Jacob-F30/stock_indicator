@@ -158,7 +158,7 @@ def main() -> None:
             index=0,
         )
         ticker_input = st.text_input("3) Enter a US stock ticker (e.g., AAPL)").strip().upper()
-        wants_recommendation = st.checkbox("I want suggested tickers instead", value=not bool(ticker_input))
+        wants_recommendation = st.checkbox("I want suggested tickers instead", value=False)
 
     with col_right:
         st.markdown("#### Suggested tickers by style")
@@ -229,7 +229,7 @@ def main() -> None:
                     "cv_f1_macro_std": round(float(cv_metrics["cv_f1_macro_std"]), 4),
                 }
             )
-        except (ValueError, RuntimeError, KeyError) as exc:
+        except (ValueError, RuntimeError) as exc:
             st.error(f"Unable to generate compass reading: {exc}")
 
     render_disclaimer_banner()

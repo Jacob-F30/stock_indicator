@@ -252,10 +252,13 @@ class TripleBarrierXGBoostAnalyst:
         Raises:
             RuntimeError: If no valid training folds are produced.
         """
+        horizon_days = 20
         processed = preprocess_data(historical_df)
-        labels = triple_barrier_label(processed)
+        labels = triple_barrier_label(processed, horizon_days=horizon_days)
 
-        valid_rows = processed.index[:-20] if len(processed) > 20 else processed.index[:0]
+        valid_rows = (
+            processed.index[:-horizon_days] if len(processed) > horizon_days else processed.index[:0]
+        )
         if len(valid_rows) < 100:
             raise RuntimeError("Not enough labeled observations to train the model reliably")
 
