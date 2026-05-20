@@ -152,7 +152,7 @@ def triple_barrier_label(
 
     Args:
         df: Preprocessed DataFrame with Close and Volatility_EMA20.
-        horizon_days: Vertical barrier in trading days.
+        horizon_days: Vertical barrier in trading days (20 ~= roughly one trading month).
         upper_mult: Upper barrier multiplier.
         lower_mult: Lower barrier multiplier.
 
@@ -236,8 +236,11 @@ def _build_feature_matrix(df: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
 class TripleBarrierXGBoostAnalyst:
     """Triple-Barrier + XGBoost backend for market direction classification."""
 
-    def __init__(self, random_state: int = 42) -> None:
+    def __init__(self, random_state: int = 42, horizon_days: int = 20) -> None:
+        if horizon_days < 1:
+            raise ValueError("horizon_days must be >= 1")
         self.random_state = random_state
+        self.horizon_days = horizon_days
         self.artifacts: Optional[ModelArtifacts] = None
 
     def fit(self, historical_df: pd.DataFrame) -> dict[str, float]:
@@ -252,12 +255,14 @@ class TripleBarrierXGBoostAnalyst:
         Raises:
             RuntimeError: If no valid training folds are produced.
         """
-        horizon_days = 20
         processed = preprocess_data(historical_df)
-        labels = triple_barrier_label(processed, horizon_days=horizon_days)
+        labels = triple_barrier_label(processed, horizon_days=self.horizon_days)
 
+        # Exclude tail rows without a full forward horizon to avoid ambiguous labels.
         valid_rows = (
-            processed.index[:-horizon_days] if len(processed) > horizon_days else processed.index[:0]
+            processed.index[:-self.horizon_days]
+            if len(processed) > self.horizon_days
+            else processed.index[:0]
         )
         if len(valid_rows) < 100:
             raise RuntimeError("Not enough labeled observations to train the model reliably")

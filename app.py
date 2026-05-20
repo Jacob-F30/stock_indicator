@@ -13,6 +13,9 @@ from analyst_model import train_analyst_model
 DISCLAIMER_TEXT = "Educational tool only. Not guaranteed financial advice."
 SENTIMENT_POSITIVE_THRESHOLD = 0.2
 SENTIMENT_NEGATIVE_THRESHOLD = -0.2
+SENTIMENT_HASH_MODULO = 17
+SENTIMENT_HASH_CENTER = 8
+SENTIMENT_HASH_SCALE = 7
 
 INVESTMENT_STYLES: Dict[str, Dict[str, str]] = {
     "Long-term & Safe": {
@@ -46,7 +49,9 @@ def render_disclaimer_banner() -> None:
 
 def mock_reader_sentiment(ticker: str) -> Tuple[float, str]:
     seed = sum(ord(ch) for ch in ticker.upper())
-    score = float(np.tanh((seed % 17 - 8) / 7))
+    score = float(
+        np.tanh((seed % SENTIMENT_HASH_MODULO - SENTIMENT_HASH_CENTER) / SENTIMENT_HASH_SCALE)
+    )
 
     if score >= 0.35:
         summary = f"Recent coverage around {ticker.upper()} appears mostly optimistic, with demand and execution trends viewed favorably."
@@ -158,7 +163,7 @@ def main() -> None:
             index=0,
         )
         ticker_input = st.text_input("3) Enter a US stock ticker (e.g., AAPL)").strip().upper()
-        wants_recommendation = st.checkbox("I want suggested tickers instead", value=False)
+        wants_recommendation = st.checkbox("Use suggested tickers from the list below", value=False)
 
     with col_right:
         st.markdown("#### Suggested tickers by style")
