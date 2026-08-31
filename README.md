@@ -1,65 +1,68 @@
-# AI Stock Market Compass (Frontman + Analyst + Reader)
+# Market Compass
 
-A beginner-friendly, modular machine-learning project that acts like a compass for US stock-market decisions.
+A static, educational stock-analysis prototype. It shows price history, dated fundamental indices, prediction intervals, directional probabilities, risk, and a Buy/Watch/Sell Compass signal for ten iconic US stocks.
 
-## Multi-Agent Overview
+There is no runtime backend, database, subscription, or browser market-data call. GitHub Pages serves the website; a Python job creates the data assets offline.
 
-- **Frontman (`app.py`)**: Streamlit orchestration/UI layer that translates model outputs into plain-English guidance.
-- **Analyst (`analyst_model.py`)**: Quantitative backend using a Triple Barrier labeling workflow and XGBoost for directional classification.
-- **Reader (mocked in `app.py`)**: News-sentiment context provider returning a sentiment score and concise summary.
-
-## Key Modeling Approach
-
-The Analyst backend uses a **Triple Barrier Method** with:
-
-- **Upper barrier**: `Close + (Volatility_EMA20 * 2)`
-- **Lower barrier**: `Close - (Volatility_EMA20 * 1)`
-- **Vertical barrier**: 20 trading days
-
-Each historical observation is labeled as:
-
-- `+1` if upper barrier is hit first
-- `-1` if lower barrier is hit first
-- `0` if the vertical time limit expires first
-
-The model then trains an **XGBoost multiclass classifier** and evaluates with **TimeSeriesSplit** to reduce hindsight/lookahead bias that random splitting can introduce in financial time series.
-
-## Installation
+## Run The Interface
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-pip install --upgrade pip
-pip install -r requirements.txt
+npm install
+npm run dev
 ```
 
-## Run Locally
+Open the URL printed by Vite. Run `npm run build` to typecheck and create the deployable static bundle in `dist/`.
 
-```bash
-streamlit run app.py
-```
+## Generate Real Static Data
 
-Then open the local URL shown in your terminal.
-
-## Repository Layout
+The checked-in interface uses explicitly labelled simulated data until this step runs. The generator downloads full adjusted daily price history and public SEC Companyfacts for:
 
 ```text
-stock_indicator/
-├── app.py                   # Frontman Streamlit app (UI/orchestration)
-├── analyst_model.py         # Analyst quantitative model and training pipeline
-├── requirements.txt         # Python dependencies
-├── README.md                # Project documentation
-└── .gitignore               # Common local artifacts excluded from version control
+AAPL MSFT NVDA AMZN GOOGL META TSLA BRK-B JPM JNJ
 ```
 
-Planned extension point: future standalone Reader modules can be added under `agents/reader/`.
+To replace only the chart with real history from each stock's earliest available trading date, without SEC data or model training:
 
-## Data & Scope
+```bash
+.venv\Scripts\python.exe scripts\build_static_data.py --prices-only
+```
 
-- **Current region**: US equities only
-- **Market data source**: `yfinance`
-- **Data mode**: EOD / delayed data pipeline, designed to remain modular for future real-time upgrades
+This is the quickest first refresh and writes `public/data/<symbol>/prices.json`. The interface labels the chart as real historical prices while it continues to label model and fundamental placeholders honestly.
 
-## Risk & Disclaimer
+```bash
+.venv\Scripts\python.exe -m pip install -r requirements.txt
+.venv\Scripts\python.exe scripts\build_static_data.py --sec-user-agent "Your Name contact@example.com"
+```
 
-**Educational tool only. Not guaranteed financial advice.**
+The required identifier is SEC policy, not a secret. The command writes browser-ready JSON to `public/data/` and retains normalized analysis data as Parquet in `data/analysis/`. Generated files are ignored by Git; a scheduled GitHub Action builds and publishes them directly.
+
+Use `--symbols AAPL MSFT` for a smaller run. `--forecast-stride 21` exports one point-in-time forecast approximately each trading month. A forecast uses SEC facts filed on or before its selected date and trains only on returns whose outcome would have been known at that date.
+
+## Model And Evaluation
+
+Features include returns, moving-average distance, volatility, volume change, operating margin, ROE, ROIC, FCF, cash-to-market-cap, net debt, and interest coverage. Three quantile gradient-boosting models estimate an 80% price interval and median return; that return and interval width produce the Compass direction, probabilities, and risk score.
+
+For the initial holdout, models train through three months before the newest price. The newest three months are measured where the selected horizon has matured. Longer horizons need older walk-forward evaluations, so unavailable coverage must remain unavailable in the UI.
+
+## Free Deployment
+
+1. Create a public GitHub repository and enable GitHub Pages with **GitHub Actions** as its source.
+2. Push this project to the default branch. `.github/workflows/pages.yml` builds and deploys the frontend.
+3. Set repository variable `SEC_USER_AGENT` to a truthful contact string.
+4. Run the **Refresh static data** workflow manually or let it run weekly. It downloads data, trains models, builds the frontend, and deploys the generated result.
+
+The price source and SEC facts have their own usage conditions. Review those terms before redistributing generated market data publicly.
+
+## Project Layout
+
+```text
+src/                         React Compass interface
+scripts/build_static_data.py Offline acquisition, feature, model, and JSON export
+public/data/                 Generated static browser assets (ignored)
+.github/workflows/           GitHub Pages deploy and scheduled data refresh
+app.py, analyst_model.py     Legacy Streamlit prototype retained only as reference
+```
+
+## Disclaimer
+
+Educational prototype only. Forecasts can be wrong and are not investment advice.
