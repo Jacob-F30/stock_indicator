@@ -154,7 +154,7 @@ function App() {
 
       <section className="controls" aria-label="Stock and forecast controls">
         <label className="stock-search"><Search size={18} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search ticker or company" aria-label="Search stocks" /><ChevronDown size={16} /></label>
-        <div className="stock-pills" role="listbox" aria-label="Available stocks">
+        <div className="stock-pills" aria-label="Available stocks">
           {visibleStocks.map((item) => <button key={item.symbol} className={item.symbol === symbol ? "stock-pill active" : "stock-pill"} onClick={() => { setSymbol(item.symbol); setActiveIndex(item.history.length - 1); }}>{item.symbol}</button>)}
         </div>
         <div className="horizons" aria-label="Forecast horizon">
