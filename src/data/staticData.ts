@@ -58,7 +58,7 @@ export async function loadStaticStock(fallback: Stock): Promise<StaticStockData 
   const priceResponse = await fetch(`${directory}/prices.json`);
   if (!priceResponse.ok) return null;
 
-  const prices = await priceResponse.json() as PricePoint[];
+  const prices = (await priceResponse.json()) as PricePoint[];
   if (!prices.length) return null;
   const [fundamentals, forecasts] = await Promise.all([
     fetch(`${directory}/fundamentals.json`).then(async (response) => response.ok ? response.json() as Promise<RawFundamental[]> : []).catch(() => []),
