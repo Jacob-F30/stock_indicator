@@ -20,8 +20,6 @@ from urllib.request import Request, urlopen
 import numpy as np
 import pandas as pd
 import yfinance as yf
-from sklearn.ensemble import HistGradientBoostingRegressor
-from sklearn.metrics import mean_absolute_error
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -166,7 +164,9 @@ def build_features(prices: pd.DataFrame, fundamentals: pd.DataFrame) -> pd.DataF
     return features
 
 
-def train_quantile_models(features: pd.DataFrame, prices: pd.DataFrame, horizon_days: int, train_until: pd.Timestamp) -> tuple[dict[str, HistGradientBoostingRegressor], dict[str, float]]:
+def train_quantile_models(features: pd.DataFrame, prices: pd.DataFrame, horizon_days: int, train_until: pd.Timestamp) -> tuple[dict[str, Any], dict[str, float]]:
+    from sklearn.ensemble import HistGradientBoostingRegressor
+
     target = prices["Close"].shift(-horizon_days) / prices["Close"] - 1
     rows = features.assign(target=target).loc[:train_until].dropna(subset=FEATURE_COLUMNS + ["target"])
     if len(rows) < 160:
@@ -177,7 +177,7 @@ def train_quantile_models(features: pd.DataFrame, prices: pd.DataFrame, horizon_
     return models, {"trainingRows": float(len(rows))}
 
 
-def build_forecast(models: dict[str, HistGradientBoostingRegressor], feature_row: pd.DataFrame, price: float, symbol: str, as_of_date: pd.Timestamp, horizon_months: int) -> dict[str, Any]:
+def build_forecast(models: dict[str, Any], feature_row: pd.DataFrame, price: float, symbol: str, as_of_date: pd.Timestamp, horizon_months: int) -> dict[str, Any]:
     low, median, high = sorted(float(models[name].predict(feature_row[FEATURE_COLUMNS])[0]) for name in ("low", "median", "high"))
     downside = round(max(8, min(82, 32 - median * 130 + (high - low) * 65)))
     upside = round(max(8, min(82, 48 + median * 130 - (high - low) * 30)))
@@ -188,6 +188,8 @@ def build_forecast(models: dict[str, HistGradientBoostingRegressor], feature_row
 
 
 def export_stock(company: Company, user_agent: str, forecast_stride: int) -> dict[str, Any]:
+    from sklearn.metrics import mean_absolute_error
+
     print(f"Downloading {company.symbol}...")
     prices = download_prices(company.symbol)
     company_facts = request_json(f"https://data.sec.gov/api/xbrl/companyfacts/CIK{company.cik}.json", user_agent)
