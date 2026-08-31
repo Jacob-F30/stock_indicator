@@ -143,7 +143,7 @@ function App() {
   return (
     <main>
       <header className="topbar">
-        <a className="brand" href="/" aria-label="Market Compass home"><Compass size={27} strokeWidth={1.8} /><span>Market <b>Compass</b></span></a>
+        <a className="brand" href={import.meta.env.BASE_URL} aria-label="Market Compass home"><Compass size={27} strokeWidth={1.8} /><span>Market <b>Compass</b></span></a>
         <div className="data-status"><span className="status-dot" />{assetStatus.pricesLoaded ? "Real historical prices" : "Demo historical prices"}<span className="muted">through {formatDate(stock.history.at(-1)!.date)}</span></div>
       </header>
 
