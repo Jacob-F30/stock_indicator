@@ -49,7 +49,7 @@ class Company:
 
 
 def request_json(url: str, user_agent: str) -> dict[str, Any]:
-    request = Request(url, headers={"User-Agent": user_agent, "Accept-Encoding": "gzip, deflate"})
+    request = Request(url, headers={"User-Agent": user_agent})
     with urlopen(request, timeout=30) as response:  # nosec B310: documented SEC endpoint
         return json.loads(response.read().decode("utf-8"))
 
